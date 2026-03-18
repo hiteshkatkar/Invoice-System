@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HDK Technology — Invoice System</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet"/>
+<style>
+/* ═══════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Outfit',sans-serif;background:#0f172a;color:#1e293b;min-height:100vh;}
+
+/* ═══════════════════════════════════════════════
+   PAGE SYSTEM
+═══════════════════════════════════════════════ */
+.page{display:none;min-height:100vh;}
+.page.active{display:block;}
+
+/* ═══════════════════════════════════════════════
+   PAGE 1 — LOGIN
+═══════════════════════════════════════════════ */
+#page-login{
+  display:none;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,#0f172a 0%,#1a3a5c 50%,#0f172a 100%);
+}
+#page-login.active{display:flex;}
+
+.login-card{
+  background:#fff;border-radius:20px;padding:52px 44px 44px;
+  width:390px;box-shadow:0 32px 80px rgba(0,0,0,.5);
+  animation:fadeUp .5s ease;
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+.login-brand{text-align:center;margin-bottom:28px;}
+.login-brand h1{font-family:'Playfair Display',serif;font-size:26px;color:#1e3a5f;margin-bottom:4px;}
+.login-brand p{font-size:12px;color:#94a3b8;letter-spacing:.8px;text-transform:uppercase;}
+
+.form-group{margin-bottom:18px;}
+.form-group label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#374151;margin-bottom:6px;}
+.form-group input{
+  width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;
+  border-radius:10px;font-size:15px;font-family:'Outfit',sans-serif;
+  outline:none;transition:border .2s;
+}
+.form-group input:focus{border-color:#1e3a5f;}
+
+.btn-login{
+  width:100%;padding:14px;background:#1e3a5f;color:#fff;
+  border:none;border-radius:10px;font-size:16px;font-weight:600;
+  cursor:pointer;letter-spacing:.4px;transition:background .2s,transform .1s;
+  font-family:'Outfit',sans-serif;margin-top:6px;
+}
+.btn-login:hover{background:#2a4f82;}
+.btn-login:active{transform:scale(.98);}
+.login-error{color:#ef4444;font-size:13px;text-align:center;margin-top:10px;min-height:18px;}
+
+/* ═══════════════════════════════════════════════
+   TOPBAR (shared)
+═══════════════════════════════════════════════ */
+.topbar{
+  background:#1e3a5f;color:#fff;
+  padding:14px 28px;
+  display:flex;align-items:center;justify-content:space-between;
+  box-shadow:0 2px 16px rgba(0,0,0,.35);
+  position:sticky;top:0;z-index:100;
+}
+.topbar-brand{font-family:'Playfair Display',serif;font-size:18px;}
+.topbar-actions{display:flex;gap:10px;}
+.btn-sm{
+  background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.3);
+  padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;
+  cursor:pointer;transition:background .15s;font-family:'Outfit',sans-serif;
+}
+.btn-sm:hover{background:rgba(255,255,255,.25);}
+.btn-sm.white{background:#fff;color:#1e3a5f;border-color:#fff;}
+.btn-sm.white:hover{background:#e2e8f0;}
+
+/* ═══════════════════════════════════════════════
+   PAGE 2 — FORM
+═══════════════════════════════════════════════ */
+#page-form{background:#f1f5f9;}
+.form-page-body{max-width:980px;margin:0 auto;padding:28px 20px 60px;}
+
+.card{
+  background:#fff;border-radius:14px;padding:24px 26px 20px;
+  margin-bottom:20px;box-shadow:0 2px 12px rgba(0,0,0,.07);
+}
+.card-title{
+  font-size:11.5px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.8px;color:#1e3a5f;margin-bottom:16px;
+  padding-bottom:10px;border-bottom:2px solid #e2e8f0;
+}
+
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.grid-12{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+
+.fl{margin-bottom:0;}
+.fl label{display:block;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:#374151;margin-bottom:5px;}
+.fl input,.fl select,.fl textarea{
+  width:100%;padding:9px 11px;border:1.5px solid #e2e8f0;
+  border-radius:8px;font-size:13.5px;font-family:'Outfit',sans-serif;
+  outline:none;transition:border .2s;background:#fff;
+}
+.fl input:focus,.fl select:focus,.fl textarea:focus{border-color:#1e3a5f;}
+.fl textarea{resize:vertical;min-height:80px;}
+
+/* items table */
+.items-wrap{overflow-x:auto;}
+table.items{width:100%;border-collapse:collapse;min-width:700px;}
+table.items th{
+  background:#f8fafc;color:#374151;font-size:10.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.6px;padding:9px 8px;
+  text-align:left;border-bottom:2px solid #e2e8f0;white-space:nowrap;
+}
+table.items td{padding:6px 5px;border-bottom:1px solid #f1f5f9;vertical-align:middle;}
+table.items tr:last-child td{border-bottom:none;}
+table.items td input{
+  padding:6px 8px;border:1.5px solid #e2e8f0;border-radius:7px;
+  font-size:12.5px;font-family:'Outfit',sans-serif;outline:none;
+  width:100%;transition:border .2s;
+}
+table.items td input:focus{border-color:#1e3a5f;}
+.td-num{text-align:right;font-weight:600;font-size:13px;padding-right:10px;}
+
+.btn-add-row{
+  background:#e0f2fe;color:#0369a1;border:none;border-radius:8px;
+  padding:8px 16px;font-size:12.5px;font-weight:600;cursor:pointer;
+  margin-top:12px;font-family:'Outfit',sans-serif;transition:background .15s;
+}
+.btn-add-row:hover{background:#bae6fd;}
+.btn-del{
+  background:#fee2e2;color:#dc2626;border:none;border-radius:6px;
+  padding:4px 9px;cursor:pointer;font-size:12px;font-family:'Outfit',sans-serif;
+}
+
+.totals-section{display:flex;justify-content:flex-end;margin-top:12px;}
+.totals-box{min-width:280px;}
+.t-row{display:flex;justify-content:space-between;font-size:13px;padding:3px 0;border-bottom:1px dashed #e2e8f0;}
+.t-row.grand{font-size:15px;font-weight:700;color:#1e3a5f;border:none;border-top:2px solid #1e3a5f;padding-top:8px;margin-top:4px;}
+
+.btn-generate{
+  display:block;margin:0 auto;
+  background:#1e3a5f;color:#fff;border:none;border-radius:12px;
+  padding:15px 48px;font-size:15px;font-weight:700;cursor:pointer;
+  letter-spacing:.5px;font-family:'Outfit',sans-serif;
+  transition:background .2s,transform .1s;
+  box-shadow:0 4px 20px rgba(30,58,95,.35);
+}
+.btn-generate:hover{background:#2a4f82;}
+.btn-generate:active{transform:scale(.98);}
+
+/* company info strip */
+.company-strip{
+  background:linear-gradient(90deg,#1e3a5f,#2d5490);
+  color:#fff;border-radius:10px;padding:14px 20px;
+  display:flex;flex-wrap:wrap;gap:18px;font-size:12.5px;margin-bottom:20px;
+}
+.company-strip span{opacity:.85;}
+.company-strip strong{opacity:1;}
+
+/* ═══════════════════════════════════════════════
+   PAGE 3 — PRINT PREVIEW
+═══════════════════════════════════════════════ */
+#page-print{background:#dde3ec;}
+.preview-body{max-width:840px;margin:0 auto;padding:28px 16px 60px;}
+
+/* The actual invoice paper */
+.invoice-paper{
+  background:#fff;border-radius:4px;
+  box-shadow:0 4px 30px rgba(0,0,0,.15);
+  padding:36px 42px 44px;
+  font-size:12.5px;line-height:1.55;
+}
+.inv-main-title{
+  text-align:center;font-size:16px;font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;
+  text-decoration:underline;margin-bottom:20px;
+  color:#1e3a5f;
+}
+.inv-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;}
+.inv-co-name{font-family:'Playfair Display',serif;font-size:26px;color:#1e3a5f;}
+.inv-co-tag{font-size:11px;color:#64748b;margin-top:1px;}
+.inv-co-info{margin-top:8px;font-size:12px;color:#374151;line-height:1.7;}
+.inv-right{text-align:right;font-size:12px;}
+.inv-right div{margin-bottom:3px;}
+.ilabel{font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:#1e3a5f;}
+hr.inv-rule{border:none;border-top:2px solid #1e3a5f;margin:12px 0;}
+hr.inv-rule-light{border:none;border-top:1px solid #e2e8f0;margin:10px 0;}
+
+.inv-bill{margin:12px 0;font-size:12.5px;}
+.inv-bill-inner{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+
+table.inv-items{width:100%;border-collapse:collapse;margin:14px 0;font-size:12px;}
+table.inv-items th{background:#1e3a5f;color:#fff;padding:8px 10px;text-align:left;font-size:11px;letter-spacing:.4px;}
+table.inv-items td{padding:7px 10px;border-bottom:1px solid #e2e8f0;}
+table.inv-items tr.total-row td{font-weight:700;background:#f8fafc;border-top:2px solid #e2e8f0;}
+
+.inv-summary{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:16px;}
+
+table.tax-table{width:100%;border-collapse:collapse;font-size:11px;}
+table.tax-table th{background:#f1f5f9;padding:6px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border:1px solid #e2e8f0;}
+table.tax-table td{padding:6px 8px;border:1px solid #e2e8f0;}
+
+.inv-totals{font-size:12.5px;}
+.itr{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed #e2e8f0;}
+.itr.grand{font-weight:700;font-size:15px;color:#1e3a5f;border:none;border-top:2px solid #1e3a5f;padding-top:8px;margin-top:4px;}
+.inv-words{font-style:italic;font-size:11.5px;color:#374151;margin-top:6px;line-height:1.5;}
+
+.inv-bottom{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:18px;font-size:12px;}
+.inv-terms{font-size:11.5px;color:#374151;line-height:1.6;}
+
+.inv-sign{display:flex;flex-direction:column;align-items:flex-end;margin-top:36px;}
+.sign-space{height:44px;}
+.sign-line{border-top:1px solid #374151;width:180px;padding-top:5px;text-align:center;font-size:12px;color:#374151;}
+
+/* ═══════════════════════════════════════════════
+   PRINT MEDIA — hides UI chrome
+═══════════════════════════════════════════════ */
+@media print{
+  .topbar,.preview-actions,#page-login,#page-form,.no-print{display:none!important;}
+  #page-print{background:#fff!important;display:block!important;}
+  .preview-body{padding:0!important;max-width:100%!important;}
+  .invoice-paper{box-shadow:none!important;border-radius:0!important;padding:16px 20px!important;}
+  body{background:#fff!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     PAGE 1 — LOGIN
+══════════════════════════════════════════ -->
+<div id="page-login" class="page active">
+  <div class="login-card">
+    <div class="login-brand">
+      <h1>HDK Technology</h1>
+      <p>Invoice Management System</p>
+    </div>
+    <div class="form-group">
+      <label>Your Code</label>
+      <input type="text" id="inp-user" placeholder="Enter a Code" autocomplete="username"/>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="inp-pass" placeholder="Enter password" autocomplete="current-password"/>
+    </div>
+    <button class="btn-login" onclick="doLogin()">Sign In →</button>
+    <div class="login-error" id="login-err"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE 2 — INVOICE FORM
+══════════════════════════════════════════ -->
+<div id="page-form" class="page">
+  <div class="topbar">
+    <span class="topbar-brand">HDK Technology — Invoice Creator</span>
+    <div class="topbar-actions">
+      <button class="btn-sm white" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+  <div class="form-page-body">
+
+    <!-- Company strip -->
+    <div class="company-strip">
+      <strong>HDK Technology</strong>
+      <span>Hardware &amp; Network Engineer</span>
+      <span>📞 +91 88280 91905</span>
+      <span>✉ Hdktechnology@hotmail.com</span>
+      <span>📍 State: Maharashtra</span>
+    </div>
+
+    <!-- Invoice Details + Bill To -->
+    <div class="grid-12">
+      <div class="card">
+        <div class="card-title">Invoice Details</div>
+        <div class="grid-2" style="gap:12px">
+          <div class="fl"><label>Invoice No</label><input type="text" id="f-invno" value="1000"/></div>
+          <div class="fl"><label>Date</label><input type="date" id="f-date"/></div>
+          <div class="fl"><label>POS</label><input type="text" id="f-pos" value="Maharashtra"/></div>
+          <div class="fl"><label>Place of Supply</label><input type="text" id="f-supply" value="Mumbai"/></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Bill To</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="fl"><label>Client Name</label><input type="text" id="f-cname" placeholder="User Full Name"/></div>
+          <div class="fl"><label>Phone No</label><input type="text" id="f-cphone" value="+91 "/></div>
+          <div class="fl"><label>Email ID</label><input type="email" id="f-cemail" placeholder="client@email.com"/></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Line Items -->
+    <div class="card">
+      <div class="card-title">Line Items</div>
+      <div class="items-wrap">
+        <table class="items" id="items-table">
+          <thead>
+            <tr>
+              <th style="width:36px">#</th>
+              <th style="min-width:160px">Item Name</th>
+              <th style="width:90px">HSN/SAC</th>
+              <th style="width:65px">Qty</th>
+              <th style="width:100px">Price/Unit</th>
+              <th style="width:90px">Discount</th>
+              <th style="width:70px">GST %</th>
+              <th style="width:100px">Amount</th>
+              <th style="width:40px"></th>
+            </tr>
+          </thead>
+          <tbody id="items-body">
+            <!-- rows injected by JS -->
+          </tbody>
+        </table>
+      </div>
+      <button class="btn-add-row" onclick="addRow()">+ Add Row</button>
+      <div class="totals-section">
+        <div class="totals-box">
+          <div class="t-row"><span>Sub Total</span><span id="t-sub">₹ 0.00</span></div>
+          <div class="t-row"><span>Total GST</span><span id="t-gst">₹ 0.00</span></div>
+          <div class="t-row"><span>Round Off</span><span id="t-round">₹ 0.00</span></div>
+          <div class="t-row grand"><span>TOTAL</span><span id="t-grand">₹ 0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Description + Terms -->
+    <div class="grid-12">
+      <div class="card">
+        <div class="card-title">Description</div>
+        <div class="fl"><textarea id="f-terms">Bank Details For NEFT	
+ACCOUNT NO:6345441676
+IFSC: KKBK0001416
+UPI ID:	9137969199@kotal811 / hiteshkatkar00@okaxis</textarea></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Terms &amp; Conditions</div>
+        <div class="fl"><textarea id="f-desc">
+A one-year service will come with fees 
+determined by the particular service offered.
+Thanks for doing business with us!
+Non-refundable amount.</textarea></div>
+      </div>
+    </div>
+
+    <button class="btn-generate" onclick="generateInvoice()">Generate Invoice &rarr;</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     PAGE 3 — PRINT PREVIEW
+══════════════════════════════════════════ -->
+<div id="page-print" class="page">
+  <div class="topbar no-print">
+    <span class="topbar-brand">HDK Technology — Invoice Preview</span>
+    <div class="topbar-actions">
+      <button class="btn-sm" onclick="goBack()">← Edit Invoice</button>
+      <button class="btn-sm white" onclick="printInvoice()">🖨 Print</button>
+      <button class="btn-sm" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+  <div class="preview-body">
+    <div class="invoice-paper" id="invoice-output">
+      <!-- filled by JS -->
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────
+let items = [
+  {name:"Service Charge", hsn:"N/A", qty:1, price:600, discount:0, gst:0}
+];
+
+// ─── Init ─────────────────────────────────────────────────────────────────
+(function init(){
+  // set today's date
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("f-date").value = today;
+  // render initial row
+  renderRows();
+  // enter key on login
+  ["inp-user","inp-pass"].forEach(id=>{
+    document.getElementById(id).addEventListener("keydown", e=>{
+      if(e.key==="Enter") doLogin();
+    });
+  });
+})();
+
+// ─── Page nav ─────────────────────────────────────────────────────────────
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p=>{
+    p.classList.remove("active");
+    p.style.display="none";
+  });
+  const el = document.getElementById(id);
+  el.style.display = (id==="page-login") ? "flex" : "block";
+  el.classList.add("active");
+}
+
+// ─── Login ─────────────────────────────────────────────────────────────────
+function doLogin(){
+  const u = document.getElementById("inp-user").value.trim();
+  const p = document.getElementById("inp-pass").value;
+  if(u==="HDK" && p==="1234"){
+    document.getElementById("login-err").textContent="";
+    showPage("page-form");
+  } else {
+    document.getElementById("login-err").textContent="Invalid username or password.";
+    document.getElementById("inp-pass").value="";
+  }
+}
+function doLogout(){
+  document.getElementById("inp-user").value="";
+  document.getElementById("inp-pass").value="";
+  document.getElementById("login-err").textContent="";
+  showPage("page-login");
+}
+function goBack(){ showPage("page-form"); }
+
+// ─── Items table ──────────────────────────────────────────────────────────
+function calcAmt(r){ return (r.qty * r.price) - r.discount; }
+function calcGST(r){ return calcAmt(r) * (r.gst / 100); }
+
+function renderRows(){
+  const tbody = document.getElementById("items-body");
+  tbody.innerHTML = "";
+  items.forEach((r,i)=>{
+    const amt = calcAmt(r);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td style="color:#64748b;text-align:center">${i+1}</td>
+      <td><input type="text" value="${r.name}" oninput="updateItem(${i},'name',this.value)" style="min-width:140px"/></td>
+      <td><input type="text" value="${r.hsn}" oninput="updateItem(${i},'hsn',this.value)"/></td>
+      <td><input type="number" value="${r.qty}" oninput="updateItem(${i},'qty',+this.value)" style="width:60px"/></td>
+      <td><input type="number" value="${r.price}" oninput="updateItem(${i},'price',+this.value)" style="width:85px"/></td>
+      <td><input type="number" value="${r.discount}" oninput="updateItem(${i},'discount',+this.value)" style="width:75px"/></td>
+      <td><input type="number" value="${r.gst}" oninput="updateItem(${i},'gst',+this.value)" style="width:60px"/></td>
+      <td class="td-num">₹ ${amt.toFixed(2)}</td>
+      <td><button class="btn-del" onclick="delRow(${i})">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  updateTotals();
+}
+
+function updateItem(i, key, val){
+    items[i][key] = (key==='name'||key==='hsn') ? val : +val;
+  // Only update the amount cell and totals, don't re-render whole table
+  const amt = calcAmt(items[i]);
+  const amtCell = document.querySelector(`#items-body tr:nth-child(${i+1}) .td-num`);
+  if(amtCell) amtCell.textContent = "₹ " + amt.toFixed(2);
+  updateTotals();
+}
+function addRow(){ items.push({name:"",hsn:"",qty:1,price:0,discount:0,gst:18}); renderRows(); }
+function delRow(i){ if(items.length>1){ items.splice(i,1); renderRows(); } }
+
+function updateTotals(){
+  const sub   = items.reduce((s,r)=>s+calcAmt(r),0);
+  const gst   = items.reduce((s,r)=>s+calcGST(r),0);
+  const grand = sub + gst;
+  const rnd   = Math.round(grand) - grand;
+  const total = Math.round(grand);
+  document.getElementById("t-sub").textContent   = "₹ "+sub.toFixed(2);
+  document.getElementById("t-gst").textContent   = "₹ "+gst.toFixed(2);
+  document.getElementById("t-round").textContent = "₹ "+rnd.toFixed(2);
+  document.getElementById("t-grand").textContent = "₹ "+total;
+}
+
+// ─── Number to Words ──────────────────────────────────────────────────────
+function numWords(n){
+  const a=["","One","Two","Three","Four","Five","Six","Seven","Eight","Nine","Ten",
+           "Eleven","Twelve","Thirteen","Fourteen","Fifteen","Sixteen","Seventeen",
+           "Eighteen","Nineteen"];
+  const b=["","","Twenty","Thirty","Forty","Fifty","Sixty","Seventy","Eighty","Ninety"];
+  n=Math.round(n);
+  if(n===0) return "Zero";
+  if(n<20) return a[n];
+  if(n<100) return b[Math.floor(n/10)]+(n%10?" "+a[n%10]:"");
+  if(n<1000) return a[Math.floor(n/100)]+" Hundred"+(n%100?" "+numWords(n%100):"");
+  if(n<100000) return numWords(Math.floor(n/1000))+" Thousand"+(n%1000?" "+numWords(n%1000):"");
+  return numWords(Math.floor(n/100000))+" Lakh"+(n%100000?" "+numWords(n%100000):"");
+}
+
+// ─── Generate Invoice (build HTML) ────────────────────────────────────────
+function generateInvoice(){
+  const v = id => document.getElementById(id).value.trim();
+  const invNo    = v("f-invno");
+  const date     = v("f-date");
+  const pos      = v("f-pos");
+  const supply   = v("f-supply");
+  const cname    = v("f-cname");
+  const cphone   = v("f-cphone");
+  const cemail   = v("f-cemail");
+  const desc     = v("f-desc");
+  const terms    = v("f-terms").replace(/\n/g,"<br/>");
+
+  const sub   = items.reduce((s,r)=>s+calcAmt(r),0);
+  const gst   = items.reduce((s,r)=>s+calcGST(r),0);
+  const grand = sub+gst;
+  const rnd   = Math.round(grand)-grand;
+  const total = Math.round(grand);
+  const cgst  = gst/2;
+  const sgst  = gst/2;
+
+  // Build items rows
+  let iRows = items.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${r.name||"—"}</td>
+      <td>${r.hsn||"—"}</td>
+      <td style="text-align:center">${r.qty}</td>
+      <td style="text-align:right">₹ ${r.price.toFixed(2)}</td>
+      <td style="text-align:right">₹ ${r.discount.toFixed(2)}</td>
+      <td style="text-align:center">${r.gst}%</td>
+      <td style="text-align:right;font-weight:600">₹ ${calcAmt(r).toFixed(2)}</td>
+    </tr>
+  `).join("");
+
+  document.getElementById("invoice-output").innerHTML = `
+    <div class="inv-main-title">Tax Invoice</div>
+
+    <div class="inv-header">
+      <div>
+        <div class="inv-co-name">HDK Technology</div>
+        <div class="inv-co-tag">Hardware &amp; Network Engineer</div>
+        <div class="inv-co-info">
+          📞 Phone: +91 88280 91905<br/>
+          📍 State: Maharashtra<br/>
+          ✉ Email: Hdktechnology@hotmail.com
+        </div>
+      </div>
+      <div class="inv-right">
+        <div><span class="ilabel">Invoice No:</span> &nbsp;${invNo}</div>
+        <div><span class="ilabel">Date:</span> &nbsp;${date}</div>
+        <div><span class="ilabel">Place of Supply:</span> &nbsp;${supply}</div>
+      </div>
+    </div>
+
+    <hr class="inv-rule"/>
+
+    <div class="inv-bill">
+      <div class="ilabel" style="margin-bottom:6px">Bill To</div>
+      <div class="inv-bill-inner">
+        <div>
+          <div><b>Client Name:</b> ${cname}</div>
+          <div><b>Phone No:</b> ${cphone}</div>
+          ${cemail?`<div><b>Email:</b> ${cemail}</div>`:""}
+          <div><b>POS:</b> ${pos}</div>
+        </div>
+        <div>
+          <div class="ilabel" style="margin-bottom:4px">Invoice Details</div>
+          <div><b>No:</b> ${invNo}</div>
+          <div><b>Date:</b> ${date}</div>
+          <div><b>Place of Supply:</b> ${supply}</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="inv-rule-light"/>
+
+    <table class="inv-items">
+      <thead>
+        <tr>
+          <th>#</th><th>Item Name</th><th>HSN/SAC</th>
+          <th style="text-align:center">Qty</th>
+          <th style="text-align:right">Price/Unit</th>
+          <th style="text-align:right">Discount</th>
+          <th style="text-align:center">GST</th>
+          <th style="text-align:right">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${iRows}
+        <tr class="total-row">
+          <td colspan="7" style="text-align:right;padding-right:14px">Total</td>
+          <td style="text-align:right">₹ ${sub.toFixed(2)}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="inv-summary">
+      <div>
+        <div class="ilabel" style="margin-bottom:8px">Tax Summary</div>
+        <table class="tax-table">
+          <thead>
+            <tr><th>HSN/SAC</th><th>Taxable Amt</th><th>CGST%</th><th>CGST Amt</th><th>SGST%</th><th>SGST Amt</th><th>Total Tax</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>—</td>
+              <td>₹ ${sub.toFixed(2)}</td>
+              <td>9%</td><td>₹ ${cgst.toFixed(2)}</td>
+              <td>9%</td><td>₹ ${sgst.toFixed(2)}</td>
+              <td>₹ ${gst.toFixed(2)}</td>
+            </tr>
+            <tr style="font-weight:700">
+              <td>Total</td><td></td>
+              <td>9%</td><td>₹ ${cgst.toFixed(2)}</td>
+              <td>9%</td><td>₹ ${sgst.toFixed(2)}</td>
+              <td>₹ ${gst.toFixed(2)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="inv-totals">
+        <div class="itr"><span>Sub Total:</span><span>₹ ${sub.toFixed(2)}</span></div>
+        <div class="itr"><span>Round Off:</span><span>₹ ${rnd.toFixed(2)}</span></div>
+        <div class="itr"><span>Total Tax (Rs):</span><span>₹ ${gst.toFixed(2)}</span></div>
+        <div class="itr grand"><span>Total:</span><span>₹ ${total}.00</span></div>
+        <div class="inv-words">
+          <b>Invoice Amount in Words:</b><br/>
+          ${numWords(total)} Rupees Only
+        </div>
+        <hr class="inv-rule-light"/>
+        <div class="itr"><span>Received:</span><span>0.00</span></div>
+        <div class="itr" style="font-weight:700"><span>Balance:</span><span>₹ ${total}</span></div>
+      </div>
+    </div>
+
+    ${desc||terms ? `
+    <hr class="inv-rule-light" style="margin-top:20px"/>
+    <div class="inv-bottom">
+      <div>
+        <div class="ilabel" style="margin-bottom:6px">Description</div>
+        <div class="inv-terms">${terms}</div>
+      </div>
+      <div>
+        <div class="ilabel" style="margin-bottom:6px">Terms &amp; Conditions</div>
+        <div class="inv-terms">${desc||"—"}</div>
+      </div>
+    </div>` : ""}
+
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:36px;">
+      <div style="font-size:12px">
+        <div class="ilabel">For HDK Technology:</div>
+        <div style="margin-top:4px;color:#374151;font-size:11.5px">Hardware &amp; Network Engineer</div>
+      </div>
+      <div class="inv-sign">
+        <div class="sign-space"></div>
+        <div class="sign-line">Authorised Signatory</div>
+      </div>
+    </div>
+  `;
+
+  showPage("page-print");
+}
+
+// ─── PRINT — the only correct way ─────────────────────────────────────────
+function printInvoice(){
+  window.print();
+}
+</script>
+</body>
+</html>
